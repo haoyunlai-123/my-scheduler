@@ -1,0 +1,13 @@
+server:
+  port: 9002
+
+spring:
+  application:
+    name: scheduler-executor
+
+scheduler:
+  admin:
+    base-url: http://127.0.0.1:9001
+  executor:
+    name: executor-1
+    address: 127.0.0.1:9002
