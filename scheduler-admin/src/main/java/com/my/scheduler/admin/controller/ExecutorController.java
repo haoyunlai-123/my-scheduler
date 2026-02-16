@@ -6,8 +6,10 @@ import com.my.scheduler.common.dto.executor.ExecutorHeartbeatRequest;
 import com.my.scheduler.common.dto.executor.ExecutorRegisterRequest;
 import com.my.scheduler.common.dto.executor.ExecutorRegisterResponse;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/executors")
 public class ExecutorController {
@@ -25,6 +27,7 @@ public class ExecutorController {
      */
     @PostMapping("/register")
     public ApiResponse<ExecutorRegisterResponse> register(@Valid @RequestBody ExecutorRegisterRequest req) {
+        log.info("register request {}", req);
         Long id = executorService.register(req);
         return ApiResponse.ok(new ExecutorRegisterResponse(id));
     }
@@ -36,6 +39,7 @@ public class ExecutorController {
      */
     @PostMapping("/heartbeat")
     public ApiResponse<Void> heartbeat(@Valid @RequestBody ExecutorHeartbeatRequest req) {
+        log.info("heartbeat request {}", req);
         executorService.heartbeat(req.getExecutorId());
         return ApiResponse.ok();
     }

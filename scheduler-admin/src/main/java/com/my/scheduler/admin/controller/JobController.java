@@ -7,10 +7,12 @@ import com.my.scheduler.common.dto.*;
 import com.my.scheduler.common.dto.job.JobCreateRequest;
 import com.my.scheduler.common.dto.job.JobUpdateRequest;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/jobs")
 public class JobController {
@@ -23,39 +25,46 @@ public class JobController {
 
     @PostMapping
     public ApiResponse<Long> create(@Valid @RequestBody JobCreateRequest req) {
+        log.info("create job, req={}", req);
         return ApiResponse.ok(jobService.create(req));
     }
 
     @PutMapping
     public ApiResponse<Void> update(@Valid @RequestBody JobUpdateRequest req) {
+        log.info("update job, req={}", req);
         jobService.update(req);
         return ApiResponse.ok();
     }
 
     @GetMapping("/{id}")
     public ApiResponse<Job> get(@PathVariable Long id) {
+        log.info("get job, id={}", id);
         return ApiResponse.ok(jobService.get(id));
     }
 
     @GetMapping
     public ApiResponse<List<Job>> list() {
+        log.info("list jobs");
         return ApiResponse.ok(jobService.list());
     }
 
     @PostMapping("/{id}/enable")
     public ApiResponse<Void> enable(@PathVariable Long id) {
+        log.info("enable job, id={}", id);
         jobService.enable(id);
         return ApiResponse.ok();
     }
 
     @PostMapping("/{id}/disable")
     public ApiResponse<Void> disable(@PathVariable Long id) {
+        log.info("disable job, id={}", id);
         jobService.disable(id);
         return ApiResponse.ok();
     }
 
     @PostMapping("/{id}/trigger")
     public ApiResponse<TriggerOnceResponse> trigger(@PathVariable Long id) {
+        log.info("trigger job, id={}", id);
         Long instanceId = jobService.triggerOnce(id);
         return ApiResponse.ok(new TriggerOnceResponse(instanceId));
     }
@@ -63,6 +72,7 @@ public class JobController {
     @GetMapping("/{id}/instances")
     public ApiResponse<List<JobInstance>> instances(@PathVariable Long id,
                                                     @RequestParam(defaultValue = "20") int limit) {
+        log.info("instances job, id={}, limit={}", id, limit);
         return ApiResponse.ok(jobService.latestInstances(id, Math.min(limit, 200)));
     }
 }

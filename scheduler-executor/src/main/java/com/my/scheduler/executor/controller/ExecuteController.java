@@ -7,10 +7,12 @@ import com.my.scheduler.common.dto.executor.ExecutionReportRequest;
 import com.my.scheduler.executor.handler.HttpJobHandler;
 import com.my.scheduler.executor.report.ReportClient;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.concurrent.*;
 
+@Slf4j
 @RestController
 @RequestMapping("/api")
 public class ExecuteController {
@@ -30,6 +32,7 @@ public class ExecuteController {
     public ApiResponse<ExecuteResponse> execute(@Valid @RequestBody ExecuteRequest req) {
         // 快速接收，异步执行
         pool.submit(() -> runAndReport(req));
+        log.info("execute req={}", req);
         return ApiResponse.ok(new ExecuteResponse(true));
     }
 
@@ -62,6 +65,7 @@ public class ExecuteController {
         report.setErrorMsg(err);
         report.setResultSummary(summary);
 
+        log.info("execution report: {}", report);
         reportClient.report(report);
     }
 }

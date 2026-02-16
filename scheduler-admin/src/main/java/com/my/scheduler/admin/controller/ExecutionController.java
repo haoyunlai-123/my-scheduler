@@ -4,12 +4,14 @@ import com.my.scheduler.admin.repository.JobInstanceMapper;
 import com.my.scheduler.common.dto.ApiResponse;
 import com.my.scheduler.common.dto.executor.ExecutionReportRequest;
 import jakarta.validation.Valid;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/executions")
 public class ExecutionController {
@@ -22,6 +24,7 @@ public class ExecutionController {
 
     @PostMapping("/report")
     public ApiResponse<Void> report(@Valid @RequestBody ExecutionReportRequest req) {
+        log.info("report execution result: {}", req);
         String status = req.getStatus();
         if (!"SUCCESS".equals(status) && !"FAILED".equals(status)) {
             return ApiResponse.fail("invalid status: " + status);
@@ -34,6 +37,7 @@ public class ExecutionController {
         if (err != null && err.length() > 2000) err = err.substring(0, 2000);
 
         jobInstanceMapper.markFinished(req.getInstanceId(), status, endTime, duration, err);
+        log.info("marked instance {} as {}, duration: {} ms", req.getInstanceId(), status, duration);
         return ApiResponse.ok();
     }
 
