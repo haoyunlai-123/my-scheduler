@@ -2,6 +2,9 @@ package com.my.scheduler.admin.controller;
 
 import com.my.scheduler.admin.service.ExecutorService;
 import com.my.scheduler.common.dto.*;
+import com.my.scheduler.common.dto.executor.ExecutorHeartbeatRequest;
+import com.my.scheduler.common.dto.executor.ExecutorRegisterRequest;
+import com.my.scheduler.common.dto.executor.ExecutorRegisterResponse;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 

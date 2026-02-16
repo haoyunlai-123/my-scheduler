@@ -4,8 +4,8 @@ import com.my.scheduler.admin.domain.Job;
 import com.my.scheduler.admin.domain.JobInstance;
 import com.my.scheduler.admin.repository.JobInstanceMapper;
 import com.my.scheduler.admin.repository.JobMapper;
-import com.my.scheduler.common.dto.JobCreateRequest;
-import com.my.scheduler.common.dto.JobUpdateRequest;
+import com.my.scheduler.common.dto.job.JobCreateRequest;
+import com.my.scheduler.common.dto.job.JobUpdateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

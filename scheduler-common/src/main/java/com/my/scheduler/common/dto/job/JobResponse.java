@@ -1,4 +1,4 @@
-package com.my.scheduler.common.dto;
+package com.my.scheduler.common.dto.job;
 
 import lombok.Data;
 

@@ -4,6 +4,8 @@ import com.my.scheduler.admin.domain.Job;
 import com.my.scheduler.admin.domain.JobInstance;
 import com.my.scheduler.admin.service.JobService;
 import com.my.scheduler.common.dto.*;
+import com.my.scheduler.common.dto.job.JobCreateRequest;
+import com.my.scheduler.common.dto.job.JobUpdateRequest;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.*;
 

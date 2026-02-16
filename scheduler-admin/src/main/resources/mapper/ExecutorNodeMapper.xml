@@ -48,4 +48,13 @@
         where id = #{id}
     </update>
 
+    <select id="selectOnlineOrderByHeartbeatDesc" resultMap="ExecutorNodeMap">
+        select id, name, address, status, last_heartbeat_at, meta
+        from executor_node
+        where status = 'ONLINE'
+        order by last_heartbeat_at desc
+        limit #{limit}
+    </select>
+
+
 </mapper>

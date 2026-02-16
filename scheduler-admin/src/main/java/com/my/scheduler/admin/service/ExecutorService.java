@@ -2,7 +2,7 @@ package com.my.scheduler.admin.service;
 
 import com.my.scheduler.admin.domain.ExecutorNode;
 import com.my.scheduler.admin.repository.ExecutorNodeMapper;
-import com.my.scheduler.common.dto.ExecutorRegisterRequest;
+import com.my.scheduler.common.dto.executor.ExecutorRegisterRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 

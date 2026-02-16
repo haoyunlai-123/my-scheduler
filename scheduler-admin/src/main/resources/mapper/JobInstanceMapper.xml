@@ -36,4 +36,30 @@
         limit #{limit}
     </select>
 
+    <select id="selectWaitingForDispatch" resultMap="JobInstanceMap">
+        select * from job_instance
+        where status = 'WAITING'
+        order by id asc
+        limit #{limit}
+    </select>
+
+    <!-- 乐观更新：只有 WAITING 才能标 RUNNING，避免重复派发 -->
+    <update id="markRunning">
+        update job_instance
+        set status = 'RUNNING',
+        executor_id = #{executorId},
+        start_time = #{startTime}
+        where id = #{id}
+        and status = 'WAITING'
+    </update>
+
+    <update id="markFinished">
+        update job_instance
+        set status = #{status},
+        end_time = #{endTime},
+        duration_ms = #{durationMs},
+        last_error = #{lastError}
+        where id = #{id}
+    </update>
+
 </mapper>

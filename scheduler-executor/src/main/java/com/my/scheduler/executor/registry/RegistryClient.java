@@ -1,6 +1,9 @@
 package com.my.scheduler.executor.registry;
 
 import com.my.scheduler.common.dto.*;
+import com.my.scheduler.common.dto.executor.ExecutorHeartbeatRequest;
+import com.my.scheduler.common.dto.executor.ExecutorRegisterRequest;
+import com.my.scheduler.common.dto.executor.ExecutorRegisterResponse;
 import com.my.scheduler.executor.config.ExecutorProperties;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
