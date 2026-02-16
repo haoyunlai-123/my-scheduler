@@ -1,0 +1,55 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.my.scheduler.admin.repository.JobMapper">
+
+    <resultMap id="JobMap" type="com.my.scheduler.admin.domain.Job">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="schedule_type" property="scheduleType"/>
+        <result column="schedule_expr" property="scheduleExpr"/>
+        <result column="handler_type" property="handlerType"/>
+        <result column="handler_param" property="handlerParam"/>
+        <result column="route_strategy" property="routeStrategy"/>
+        <result column="retry_max" property="retryMax"/>
+        <result column="timeout_ms" property="timeoutMs"/>
+        <result column="enabled" property="enabled"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into job
+        (name, schedule_type, schedule_expr, handler_type, handler_param, route_strategy, retry_max, timeout_ms, enabled)
+        values
+        (#{name}, #{scheduleType}, #{scheduleExpr}, #{handlerType}, #{handlerParam}, #{routeStrategy}, #{retryMax}, #{timeoutMs}, #{enabled})
+    </insert>
+
+    <update id="update">
+        update job
+        set name = #{name},
+        schedule_type = #{scheduleType},
+        schedule_expr = #{scheduleExpr},
+        handler_type = #{handlerType},
+        handler_param = #{handlerParam},
+        route_strategy = #{routeStrategy},
+        retry_max = #{retryMax},
+        timeout_ms = #{timeoutMs}
+        where id = #{id}
+    </update>
+
+    <select id="selectById" resultMap="JobMap">
+        select * from job where id = #{id}
+    </select>
+
+    <select id="selectAll" resultMap="JobMap">
+        select * from job order by id desc
+    </select>
+
+    <update id="updateEnabled">
+        update job
+        set enabled = #{enabled}
+        where id = #{id}
+    </update>
+
+</mapper>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+
+<mapper namespace="com.my.scheduler.admin.repository.ExecutorNodeMapper">
+
+    <resultMap id="ExecutorNodeMap" type="com.my.scheduler.admin.domain.ExecutorNode">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="address" property="address"/>
+        <result column="status" property="status"/>
+        <result column="last_heartbeat_at" property="lastHeartbeatAt"/>
+        <result column="meta" property="meta"/>
+    </resultMap>
+
+    <select id="selectByAddress" resultMap="ExecutorNodeMap">
+        select id, name, address, status, last_heartbeat_at, meta
+        from executor_node
+        where address = #{address}
+        limit 1
+    </select>
+
+    <select id="selectById" resultMap="ExecutorNodeMap">
+        select id, name, address, status, last_heartbeat_at, meta
+        from executor_node
+        where id = #{id}
+        limit 1
+    </select>
+
+    <insert id="insert" useGeneratedKeys="true" keyProperty="id">
+        insert into executor_node (name, address, status, last_heartbeat_at, meta)
+        values (#{name}, #{address}, #{status}, #{lastHeartbeatAt}, #{meta})
+    </insert>
+
+    <update id="updateHeartbeat">
+        update executor_node
+        set last_heartbeat_at = #{lastHeartbeatAt},
+        status = #{status}
+        where id = #{id}
+    </update>
+
+    <update id="updateOnRegister">
+        update executor_node
+        set name = #{name},
+        meta = #{meta},
+        last_heartbeat_at = #{lastHeartbeatAt},
+        status = #{status}
+        where id = #{id}
+    </update>
+
+</mapper>
