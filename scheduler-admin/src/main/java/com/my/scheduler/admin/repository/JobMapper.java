@@ -18,4 +18,6 @@ public interface JobMapper {
     List<Job> selectAll();
 
     int updateEnabled(@Param("id") Long id, @Param("enabled") int enabled);
+
+    List<Job> selectEnabled();
 }

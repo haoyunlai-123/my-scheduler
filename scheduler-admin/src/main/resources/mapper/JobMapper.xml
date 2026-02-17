@@ -52,4 +52,8 @@
         where id = #{id}
     </update>
 
+    <select id="selectEnabled" resultMap="JobMap">
+        select * from job where enabled = 1 order by id asc
+    </select>
+
 </mapper>

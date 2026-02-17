@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "https://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.my.scheduler.admin.repository.JobScheduleStateMapper">
+
+    <resultMap id="StateMap" type="com.my.scheduler.admin.domain.JobScheduleState">
+        <id column="job_id" property="jobId"/>
+        <result column="next_trigger_time" property="nextTriggerTime"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <select id="selectByJobId" resultMap="StateMap">
+        select * from job_schedule_state where job_id = #{jobId}
+    </select>
+
+    <insert id="insert">
+        insert into job_schedule_state (job_id, next_trigger_time)
+        values (#{jobId}, #{nextTriggerTime})
+    </insert>
+
+    <update id="compareAndSetNextTime">
+        update job_schedule_state
+        set next_trigger_time = #{next}
+        where job_id = #{jobId}
+        and next_trigger_time = #{expected}
+    </update>
+
+    <select id="selectDue" resultMap="StateMap">
+        <![CDATA[
+        select * from job_schedule_state
+        where next_trigger_time <= #{now}
+        order by next_trigger_time asc
+        limit #{limit}
+        ]]>
+    </select>
+
+</mapper>
