@@ -42,12 +42,23 @@ public class JobService {
 
         jobMapper.insert(job);
 
-        if ("FIXED_RATE".equalsIgnoreCase(job.getScheduleType()) && job.getEnabled() == 1) {
-            long intervalMs = parseIntervalMs(job.getScheduleExpr());
-            JobScheduleState st = new JobScheduleState();
-            st.setJobId(job.getId());
-            st.setNextTriggerTime(LocalDateTime.now().plusNanos(intervalMs * 1_000_000));
-            stateMapper.insert(st);
+        if (job.getEnabled() == 1) {
+            String type = job.getScheduleType();
+            if ("FIXED_RATE".equalsIgnoreCase(type)) {
+                long intervalMs = parseIntervalMs(job.getScheduleExpr());
+                JobScheduleState st = new JobScheduleState();
+                st.setJobId(job.getId());
+                st.setNextTriggerTime(LocalDateTime.now().plusNanos(intervalMs * 1_000_000));
+                stateMapper.insert(st);
+            } else if ("CRON".equalsIgnoreCase(type)) {
+                LocalDateTime next = calcFirstCronNext(job.getScheduleExpr());
+                if (next != null) {
+                    JobScheduleState st = new JobScheduleState();
+                    st.setJobId(job.getId());
+                    st.setNextTriggerTime(next);
+                    stateMapper.insert(st);
+                }
+            }
         }
 
         return job.getId();
@@ -87,6 +98,22 @@ public class JobService {
             }
         }
 
+        if ("CRON".equalsIgnoreCase(exist.getScheduleType())) {
+            var st = stateMapper.selectByJobId(exist.getId());
+            LocalDateTime next = calcFirstCronNext(exist.getScheduleExpr());
+            if (next != null) {
+                if (st == null) {
+                    JobScheduleState ns = new JobScheduleState();
+                    ns.setJobId(exist.getId());
+                    ns.setNextTriggerTime(next);
+                    stateMapper.insert(ns);
+                } else {
+                    stateMapper.compareAndSetNextTime(exist.getId(), st.getNextTriggerTime(), next);
+                }
+            }
+        }
+
+
     }
 
     public Job get(Long id) {
@@ -114,6 +141,21 @@ public class JobService {
                 stateMapper.insert(ns);
             } else {
                 stateMapper.compareAndSetNextTime(id, st.getNextTriggerTime(), next);
+            }
+        }
+
+        if ("CRON".equalsIgnoreCase(job.getScheduleType())) {
+            var st = stateMapper.selectByJobId(id);
+            LocalDateTime next = calcFirstCronNext(job.getScheduleExpr());
+            if (next != null) {
+                if (st == null) {
+                    JobScheduleState ns = new JobScheduleState();
+                    ns.setJobId(id);
+                    ns.setNextTriggerTime(next);
+                    stateMapper.insert(ns);
+                } else {
+                    stateMapper.compareAndSetNextTime(id, st.getNextTriggerTime(), next);
+                }
             }
         }
 
@@ -167,6 +209,17 @@ public class JobService {
             return ms;
         } catch (Exception e) {
             throw new IllegalArgumentException("invalid FIXED_RATE scheduleExpr(ms): " + expr);
+        }
+    }
+
+    private LocalDateTime calcFirstCronNext(String cron) {
+        try {
+            var ce = org.springframework.scheduling.support.CronExpression.parse(cron.trim());
+            var now = java.time.ZonedDateTime.now(java.time.ZoneId.systemDefault());
+            var next = ce.next(now);
+            return next == null ? null : next.toLocalDateTime();
+        } catch (Exception e) {
+            throw new IllegalArgumentException("invalid CRON expr: " + cron);
         }
     }
 
