@@ -60,6 +60,7 @@
         duration_ms = #{durationMs},
         last_error = #{lastError}
         where id = #{id}
+        and status = 'RUNNING'
     </update>
 
     <!-- 只有当前 executor_id 匹配且 RUNNING 才能退回 WAITING，避免乱改 -->
@@ -72,5 +73,58 @@
         and status = 'RUNNING'
         and executor_id = #{executorId}
     </update>
+
+    <select id="selectRunningTimeout" resultMap="JobInstanceMap">
+        <![CDATA[
+        select ji.*
+        from job_instance ji
+        join job j on ji.job_id = j.id
+        where ji.status = 'RUNNING'
+        and ji.start_time is not null
+        and date_add(ji.start_time, interval j.timeout_ms/1000 second) <= #{now}
+        order by ji.start_time asc
+        limit #{limit}
+        ]]>
+    </select>
+
+    <update id="markTimeout">
+        update job_instance
+        set status = 'TIMEOUT',
+        end_time = #{endTime},
+        duration_ms = #{durationMs},
+        last_error = #{lastError}
+        where id = #{id}
+        and status = 'RUNNING'
+    </update>
+
+    <select id="selectRetryable" resultMap="JobInstanceMap">
+        <![CDATA[
+        select ji.*
+        from job_instance ji
+        join job j on ji.job_id = j.id
+        where ji.status in ('FAILED','TIMEOUT')
+        and ji.retry_count < j.retry_max
+                             order by ji.id asc
+                             limit #{limit}
+        ]]>
+    </select>
+
+    <update id="backToWaitingForRetry">
+        <![CDATA[
+        update job_instance ji
+        join job j on ji.job_id = j.id
+        set ji.status = 'WAITING',
+        ji.executor_id = null,
+        ji.start_time = null,
+        ji.end_time = null,
+        ji.duration_ms = null,
+        ji.last_error = null,
+        ji.retry_count = ji.retry_count + 1
+        where ji.id = #{id}
+        and ji.status in ('FAILED','TIMEOUT')
+        and ji.retry_count < j.retry_max
+        ]]>
+    </update>
+
 
 </mapper>

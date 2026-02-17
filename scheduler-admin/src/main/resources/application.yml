@@ -9,6 +9,10 @@ spring:
     username: root
     password: 1234
     driver-class-name: com.mysql.cj.jdbc.Driver
+  task:
+    scheduling:
+      pool:
+        size: 8
 
 mybatis:
   mapper-locations: classpath*:mapper/*.xml

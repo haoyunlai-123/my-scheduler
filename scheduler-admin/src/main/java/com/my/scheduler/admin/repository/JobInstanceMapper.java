@@ -47,4 +47,19 @@ public interface JobInstanceMapper {
     int markWaitingFromRunning(@Param("id") Long id,
                                @Param("executorId") Long executorId);
 
+    List<JobInstance> selectRunningTimeout(@Param("now") LocalDateTime now,
+                                           @Param("limit") int limit);
+
+    int markTimeout(@Param("id") Long id,
+                    @Param("endTime") LocalDateTime endTime,
+                    @Param("durationMs") Long durationMs,
+                    @Param("lastError") String lastError);
+
+    List<JobInstance> selectRetryable(@Param("limit") int limit);
+
+    /**
+     * 只有 FAILED/TIMEOUT 且 retry_count < retry_max 才能退回 WAITING 并 +1
+     */
+    int backToWaitingForRetry(@Param("id") Long id);
+
 }
