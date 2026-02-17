@@ -56,5 +56,14 @@
         limit #{limit}
     </select>
 
+    <update id="markOfflineBefore">
+        <![CDATA[
+        update executor_node
+        set status = 'OFFLINE'
+        where last_heartbeat_at < #{threshold}
+        and status = 'ONLINE'
+        ]]>
+    </update>
+
 
 </mapper>

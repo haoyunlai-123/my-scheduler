@@ -21,15 +21,17 @@ public class DispatchService {
     private final JobInstanceMapper jobInstanceMapper;
     private final JobMapper jobMapper;
     private final RestTemplate restTemplate;
+    private final RouterService routerService;
 
     public DispatchService(ExecutorNodeMapper executorNodeMapper,
                            JobInstanceMapper jobInstanceMapper,
                            JobMapper jobMapper,
-                           RestTemplate restTemplate) {
+                           RestTemplate restTemplate, RouterService routerService) {
         this.executorNodeMapper = executorNodeMapper;
         this.jobInstanceMapper = jobInstanceMapper;
         this.jobMapper = jobMapper;
         this.restTemplate = restTemplate;
+        this.routerService = routerService;
     }
 
     /**
@@ -45,23 +47,44 @@ public class DispatchService {
             return false;
         }
 
-        // 选 executor：先简单选最近心跳
-        List<ExecutorNode> executors = executorNodeMapper.selectOnlineOrderByHeartbeatDesc(5);
+        // 选 executor：取一批 ONLINE
+        List<ExecutorNode> executors = executorNodeMapper.selectOnlineOrderByHeartbeatDesc(10);
         if (executors == null || executors.isEmpty()) {
-            // 保持 WAITING，让后面有 executor 再派发（或你也可以标 FAILED）
-            return false;
+            return false; // 没有在线节点，保持 WAITING
         }
 
-        ExecutorNode target = executors.get(0);
+        // RoundRobin 选一个起点
+        ExecutorNode start = routerService.pickRoundRobin(job.getId(), executors);
+        int startIndex = executors.indexOf(start);
+        if (startIndex < 0) startIndex = 0;
 
-        // 先尝试把 WAITING -> RUNNING（乐观锁，避免重复派发）
-        LocalDateTime now = LocalDateTime.now();
-        int updated = jobInstanceMapper.markRunning(ins.getId(), target.getId(), now);
-        if (updated == 0) {
-            return false;
+        // 最多尝试 executors.size() 次
+        for (int attempt = 0; attempt < executors.size(); attempt++) {
+            ExecutorNode target = executors.get((startIndex + attempt) % executors.size());
+
+            // 先把 WAITING -> RUNNING（乐观锁，避免重复派发）
+            LocalDateTime now = LocalDateTime.now();
+            int updated = jobInstanceMapper.markRunning(ins.getId(), target.getId(), now);
+            if (updated == 0) {
+                return false; // 可能已被别的线程处理
+            }
+
+            boolean accepted = callExecutorAccept(target, ins, job);
+            if (accepted) {
+                return true; // 接收成功即可，后续靠 report 更新最终状态
+            }
+
+            // accept 失败：把 instance 退回 WAITING 再尝试下一个节点（关键！）
+            // 为了简单，加一个 mapper 方法：markWaitingFromRunning
+            jobInstanceMapper.markWaitingFromRunning(ins.getId(), target.getId());
         }
 
-        // 调用 executor 接收任务
+        // 尝试完仍失败：标 FAILED
+        jobInstanceMapper.markFinished(ins.getId(), "FAILED", LocalDateTime.now(), 0L, "all executors accept failed");
+        return false;
+    }
+
+    private boolean callExecutorAccept(ExecutorNode target, JobInstance ins, Job job) {
         ExecuteRequest req = new ExecuteRequest();
         req.setInstanceId(ins.getId());
         req.setJobId(job.getId());
@@ -72,18 +95,10 @@ public class DispatchService {
         String url = "http://" + target.getAddress() + "/api/execute";
         try {
             ApiResponse<?> resp = restTemplate.postForObject(url, req, ApiResponse.class);
-            if (resp == null || resp.getCode() != 0) {
-                jobInstanceMapper.markFinished(ins.getId(), "FAILED", LocalDateTime.now(), 0L,
-                        "executor accept failed: " + (resp == null ? "null" : resp.getMsg()));
-                return false;
-            }
-
-            // accepted 字段可能因为泛型变 Map，这里不强依赖它，能返回 0 就算接收成功
-            return true;
+            return resp != null && resp.getCode() == 0;
         } catch (Exception e) {
-            jobInstanceMapper.markFinished(ins.getId(), "FAILED", LocalDateTime.now(), 0L,
-                    "executor call error: " + e.getMessage());
             return false;
         }
     }
+
 }

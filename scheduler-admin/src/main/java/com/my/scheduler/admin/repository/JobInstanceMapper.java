@@ -44,4 +44,7 @@ public interface JobInstanceMapper {
                      @Param("durationMs") Long durationMs,
                      @Param("lastError") String lastError);
 
+    int markWaitingFromRunning(@Param("id") Long id,
+                               @Param("executorId") Long executorId);
+
 }

@@ -14,3 +14,8 @@ mybatis:
   mapper-locations: classpath*:mapper/*.xml
   configuration:
     map-underscore-to-camel-case: true
+
+scheduler:
+  executor:
+    heartbeat-timeout-ms: 15000   # 15s 没心跳判定离线
+

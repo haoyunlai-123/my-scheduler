@@ -4,6 +4,7 @@ import com.my.scheduler.admin.domain.ExecutorNode;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 @Mapper
@@ -31,4 +32,8 @@ public interface ExecutorNodeMapper {
      * @return
      */
     List<ExecutorNode> selectOnlineOrderByHeartbeatDesc(@Param("limit") int limit);
+
+
+    int markOfflineBefore(@Param("threshold") LocalDateTime threshold);
+
 }

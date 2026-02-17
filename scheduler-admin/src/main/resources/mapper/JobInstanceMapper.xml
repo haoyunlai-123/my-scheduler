@@ -62,4 +62,15 @@
         where id = #{id}
     </update>
 
+    <!-- 只有当前 executor_id 匹配且 RUNNING 才能退回 WAITING，避免乱改 -->
+    <update id="markWaitingFromRunning">
+        update job_instance
+        set status = 'WAITING',
+        executor_id = null,
+        start_time = null
+        where id = #{id}
+        and status = 'RUNNING'
+        and executor_id = #{executorId}
+    </update>
+
 </mapper>
