@@ -28,15 +28,10 @@ public class TimeoutWatcherRunner {
 
         for (JobInstance ins : list) {
             long durationMs = 0L;
-            if (ins.getStartTime() != null) {
-                durationMs = Duration.between(ins.getStartTime(), now).toMillis();
+            if (ins.getStartTime() != null && ins.getDeadlineTime() != null) {
+                durationMs = java.time.Duration.between(ins.getStartTime(), ins.getDeadlineTime()).toMillis(); // ~= timeoutMs
             }
-            jobInstanceMapper.markTimeout(
-                    ins.getId(),
-                    now,
-                    durationMs,
-                    "timeout detected by admin watcher"
-            );
+            jobInstanceMapper.markTimeout(ins.getId(), now, durationMs, "timeout detected by admin watcher");
         }
     }
 }

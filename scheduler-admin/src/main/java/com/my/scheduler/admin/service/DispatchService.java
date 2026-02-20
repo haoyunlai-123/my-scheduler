@@ -54,8 +54,8 @@ public class DispatchService {
         }
 
         // RoundRobin 选一个起点
-        ExecutorNode start = routerService.pickRoundRobin(job.getId(), executors);
-        int startIndex = executors.indexOf(start);
+        ExecutorNode startNode = routerService.pickRoundRobin(job.getId(), executors);
+        int startIndex = executors.indexOf(startNode);
         if (startIndex < 0) startIndex = 0;
 
         // 最多尝试 executors.size() 次
@@ -64,7 +64,10 @@ public class DispatchService {
 
             // 先把 WAITING -> RUNNING（乐观锁，避免重复派发）
             LocalDateTime now = LocalDateTime.now();
-            int updated = jobInstanceMapper.markRunning(ins.getId(), target.getId(), now);
+            LocalDateTime start = LocalDateTime.now();
+            LocalDateTime deadline = start.plusNanos(job.getTimeoutMs() * 1_000_000); // timeoutMs -> nanos
+            int updated = jobInstanceMapper.markRunning(ins.getId(), target.getId(), start, deadline);
+
             if (updated == 0) {
                 return false; // 可能已被别的线程处理
             }

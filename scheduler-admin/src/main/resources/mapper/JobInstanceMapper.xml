@@ -16,6 +16,7 @@
         <result column="last_error" property="lastError"/>
         <result column="created_at" property="createdAt"/>
         <result column="updated_at" property="updatedAt"/>
+        <result column="deadline_time" property="deadlineTime"/>
     </resultMap>
 
     <insert id="insert" useGeneratedKeys="true" keyProperty="id">
@@ -48,7 +49,8 @@
         update job_instance
         set status = 'RUNNING',
         executor_id = #{executorId},
-        start_time = #{startTime}
+        start_time = #{startTime},
+        deadline_time = #{deadlineTime}
         where id = #{id}
         and status = 'WAITING'
     </update>
@@ -76,13 +78,12 @@
 
     <select id="selectRunningTimeout" resultMap="JobInstanceMap">
         <![CDATA[
-        select ji.*
-        from job_instance ji
-        join job j on ji.job_id = j.id
-        where ji.status = 'RUNNING'
-        and ji.start_time is not null
-        and date_add(ji.start_time, interval j.timeout_ms/1000 second) <= #{now}
-        order by ji.start_time asc
+        select *
+        from job_instance
+        where status = 'RUNNING'
+        and deadline_time is not null
+        and deadline_time <= #{now}
+        order by deadline_time asc
         limit #{limit}
         ]]>
     </select>
@@ -125,6 +126,5 @@
         and ji.retry_count < j.retry_max
         ]]>
     </update>
-
 
 </mapper>

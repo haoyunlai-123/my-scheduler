@@ -20,6 +20,8 @@ public class ExecuteController {
     private final HttpJobHandler httpJobHandler;
     private final ReportClient reportClient;
 
+    private final ConcurrentHashMap<Long, Boolean> inflight = new ConcurrentHashMap<>();
+
     // 简单线程池：后续可配置化
     private final ExecutorService pool = Executors.newFixedThreadPool(8);
 
@@ -31,12 +33,24 @@ public class ExecuteController {
     @PostMapping("/execute")
     public ApiResponse<ExecuteResponse> execute(@Valid @RequestBody ExecuteRequest req) {
         // 快速接收，异步执行
-        pool.submit(() -> runAndReport(req));
-        log.info("execute req={}", req);
+        if (inflight.putIfAbsent(req.getInstanceId(), true) != null) {
+            return ApiResponse.ok(new ExecuteResponse(false));
+        }
+
+        // 立刻 ack
+        pool.submit(() -> {
+            try {
+                // do execute
+                runAndReport(req);
+                log.info("execute req={}", req);
+            } finally {
+                inflight.remove(req.getInstanceId());
+            }
+        });
         return ApiResponse.ok(new ExecuteResponse(true));
     }
 
-    private void runAndReport(ExecuteRequest req) {
+    private ApiResponse<ExecuteResponse> runAndReport(ExecuteRequest req) {
         long start = System.currentTimeMillis();
         String status = "SUCCESS";
         String err = null;
@@ -45,6 +59,10 @@ public class ExecuteController {
         try {
             if ("HTTP".equalsIgnoreCase(req.getHandlerType())) {
                 summary = httpJobHandler.execute(req.getHandlerParam());
+                if (inflight.putIfAbsent(req.getInstanceId(), Boolean.TRUE) != null) {
+                    log.warn("duplicate execute ignored, instanceId={}", req.getInstanceId());
+                    return ApiResponse.ok(new ExecuteResponse(false));
+                }
             } else {
                 throw new UnsupportedOperationException("unsupported handlerType: " + req.getHandlerType());
             }
@@ -67,5 +85,6 @@ public class ExecuteController {
 
         log.info("execution report: {}", report);
         reportClient.report(report);
+        return null;
     }
 }

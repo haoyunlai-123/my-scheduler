@@ -27,7 +27,8 @@ public interface JobInstanceMapper {
      */
     int markRunning(@Param("id") Long id,
                     @Param("executorId") Long executorId,
-                    @Param("startTime") LocalDateTime startTime);
+                    @Param("startTime") LocalDateTime startTime,
+                    @Param("deadlineTime") LocalDateTime deadlineTime);
 
     /**
      * executor执行完成后，admin接收到executor的执行结果响应，将任务状态改为success或failed

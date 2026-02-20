@@ -18,4 +18,5 @@ public class JobInstance {
     private String lastError;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
+    private java.time.LocalDateTime deadlineTime;
 }
