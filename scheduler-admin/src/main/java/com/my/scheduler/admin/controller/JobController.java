@@ -65,8 +65,8 @@ public class JobController {
     @PostMapping("/{id}/trigger")
     public ApiResponse<TriggerOnceResponse> trigger(@PathVariable Long id) {
         log.info("trigger job, id={}", id);
-        Long instanceId = jobService.triggerOnce(id);
-        return ApiResponse.ok(new TriggerOnceResponse(instanceId));
+        boolean result = jobService.triggerOnce(id);
+        return ApiResponse.ok(new TriggerOnceResponse(id, result));
     }
 
     @GetMapping("/{id}/instances")

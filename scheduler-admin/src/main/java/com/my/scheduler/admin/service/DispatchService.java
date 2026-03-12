@@ -87,6 +87,37 @@ public class DispatchService {
         return false;
     }
 
+    // 用于直接触发，不生成jobinstance,用于与dag-agent层相配合
+    public boolean dispatchOneNoInstance(JobInstance ins) {
+        Job job = jobMapper.selectById(ins.getJobId());
+        if (job == null) {
+            jobInstanceMapper.markFinished(ins.getId(), "FAILED", LocalDateTime.now(), 0L, "job not found");
+            return false;
+        }
+
+        // 选 executor：取一批 ONLINE
+        List<ExecutorNode> executors = executorNodeMapper.selectOnlineOrderByHeartbeatDesc(10);
+        if (executors == null || executors.isEmpty()) {
+            return false; // 没有在线节点，保持 WAITING
+        }
+
+        // RoundRobin 选一个起点
+        ExecutorNode startNode = routerService.pickRoundRobin(job.getId(), executors);
+        int startIndex = executors.indexOf(startNode);
+        if (startIndex < 0) startIndex = 0;
+
+        // 最多尝试 executors.size() 次
+        for (int attempt = 0; attempt < executors.size(); attempt++) {
+            ExecutorNode target = executors.get((startIndex + attempt) % executors.size());
+
+            boolean accepted = callExecutorAccept(target, ins, job);
+            if (accepted) {
+                return true; // 接收成功即可，后续靠 report 更新最终状态
+            }
+        }
+        return false;
+    }
+
     private boolean callExecutorAccept(ExecutorNode target, JobInstance ins, Job job) {
         ExecuteRequest req = new ExecuteRequest();
         req.setInstanceId(ins.getId());

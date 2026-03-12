@@ -7,4 +7,5 @@ import lombok.Data;
 @AllArgsConstructor
 public class TriggerOnceResponse {
     private Long instanceId;
+    private boolean result;
 }

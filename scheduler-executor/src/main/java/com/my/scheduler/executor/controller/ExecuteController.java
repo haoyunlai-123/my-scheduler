@@ -32,6 +32,7 @@ public class ExecuteController {
 
     @PostMapping("/execute")
     public ApiResponse<ExecuteResponse> execute(@Valid @RequestBody ExecuteRequest req) {
+        log.info("接收到请求：{}", req);
         // 快速接收，异步执行
         if (inflight.putIfAbsent(req.getInstanceId(), true) != null) {
             return ApiResponse.ok(new ExecuteResponse(false));

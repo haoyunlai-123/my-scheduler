@@ -10,9 +10,12 @@ import com.my.scheduler.common.dto.job.JobCreateRequest;
 import com.my.scheduler.common.dto.job.JobUpdateRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import cn.hutool.core.util.IdUtil;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Random;
+import java.util.UUID;
 
 @Service
 public class JobService {
@@ -20,11 +23,13 @@ public class JobService {
     private final JobMapper jobMapper;
     private final JobInstanceMapper jobInstanceMapper;
     private final JobScheduleStateMapper stateMapper;
+    private final DispatchService dispatchService;
 
-    public JobService(JobMapper jobMapper, JobInstanceMapper jobInstanceMapper, JobScheduleStateMapper stateMapper) {
+    public JobService(JobMapper jobMapper, JobInstanceMapper jobInstanceMapper, JobScheduleStateMapper stateMapper, DispatchService dispatchService) {
         this.jobMapper = jobMapper;
         this.jobInstanceMapper = jobInstanceMapper;
         this.stateMapper = stateMapper;
+        this.dispatchService = dispatchService;
     }
 
     @Transactional
@@ -169,21 +174,27 @@ public class JobService {
 
     /** 手动触发一次：只生成 instance（WAITING），派发执行下一步做 */
     @Transactional
-    public Long triggerOnce(Long jobId) {
+    public boolean triggerOnce(Long jobId) {
         Job job = ensureExist(jobId);
-        if (job.getEnabled() == null || job.getEnabled() == 0) {
+//        if (job.getEnabled() == null || job.getEnabled() == 0) {
+//            throw new IllegalStateException("job disabled: " + jobId);
+//        }
+        if (job.getEnabled() == null) {
             throw new IllegalStateException("job disabled: " + jobId);
         }
 
         JobInstance ins = new JobInstance();
+        ins.setId(1000L + new Random().nextLong(1000));
         ins.setJobId(jobId);
         ins.setTriggerTime(LocalDateTime.now());
         ins.setExecutorId(null);        // 下一步派发时再决定
         ins.setStatus("WAITING");
         ins.setRetryCount(0);
 
-        jobInstanceMapper.insert(ins);
-        return ins.getId();
+//        jobInstanceMapper.insert(ins);
+        // 不创建instance实例直接派发
+        boolean result = dispatchService.dispatchOneNoInstance(ins);
+        return result;
     }
 
     public List<JobInstance> latestInstances(Long jobId, int limit) {
