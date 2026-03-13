@@ -174,7 +174,7 @@ public class JobService {
 
     /** 手动触发一次：只生成 instance（WAITING），派发执行下一步做 */
     @Transactional
-    public boolean triggerOnce(Long jobId) {
+    public long triggerOnce(Long jobId) {
         Job job = ensureExist(jobId);
 //        if (job.getEnabled() == null || job.getEnabled() == 0) {
 //            throw new IllegalStateException("job disabled: " + jobId);
@@ -184,17 +184,17 @@ public class JobService {
         }
 
         JobInstance ins = new JobInstance();
-        ins.setId(1000L + new Random().nextLong(1000));
+//        ins.setId(1000L + new Random().nextLong(1000));
         ins.setJobId(jobId);
         ins.setTriggerTime(LocalDateTime.now());
         ins.setExecutorId(null);        // 下一步派发时再决定
         ins.setStatus("WAITING");
         ins.setRetryCount(0);
 
-//        jobInstanceMapper.insert(ins);
+        jobInstanceMapper.insert(ins);
         // 不创建instance实例直接派发
-        boolean result = dispatchService.dispatchOneNoInstance(ins);
-        return result;
+        dispatchService.dispatchOne(ins);
+        return ins.getId();
     }
 
     public List<JobInstance> latestInstances(Long jobId, int limit) {

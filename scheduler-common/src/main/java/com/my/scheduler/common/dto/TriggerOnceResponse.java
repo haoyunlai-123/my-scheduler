@@ -6,6 +6,7 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class TriggerOnceResponse {
+    private Long jobId;
     private Long instanceId;
-    private boolean result;
+    private boolean accepted;
 }

@@ -8,12 +8,14 @@ import com.my.scheduler.admin.repository.JobInstanceMapper;
 import com.my.scheduler.admin.repository.JobMapper;
 import com.my.scheduler.common.dto.ApiResponse;
 import com.my.scheduler.common.dto.executor.ExecuteRequest;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+@Slf4j
 @Service
 public class DispatchService {
 
@@ -128,6 +130,7 @@ public class DispatchService {
 
         String url = "http://" + target.getAddress() + "/api/execute";
         try {
+            log.info("派发执行：{}, url: {}", req, url);
             ApiResponse<?> resp = restTemplate.postForObject(url, req, ApiResponse.class);
             return resp != null && resp.getCode() == 0;
         } catch (Exception e) {
